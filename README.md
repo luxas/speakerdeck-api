@@ -174,7 +174,7 @@ curl http://localhost:8080/api/talks/luxas/getting-started-in-the-kubernetes-com
 
 ## Library Usage
 
-Check out the documentation on [pkg.go.dev](pkg.go.dev/github.com/luxas/speakerdeck-api)!
+Check out the documentation on [Godoc](https://godoc.org/github.com/luxas/speakerdeck-api) or [pkg.go.dev](https://pkg.go.dev/github.com/luxas/speakerdeck-api)!
 
 ## License
 
