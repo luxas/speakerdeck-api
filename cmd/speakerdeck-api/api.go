@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,18 +11,62 @@ import (
 	"time"
 
 	speakerdeck "github.com/luxas/speakerdeck-scraper"
+	"github.com/luxas/speakerdeck-scraper/location"
+	"github.com/luxas/speakerdeck-scraper/scraper"
 	log "github.com/sirupsen/logrus"
 )
 
-// TODO: Add sample usage text at the "/" endpoint
-// TODO: Add support for the location extension
+const (
+	prefix      = `/api`
+	welcomeText = `
+<h1>Welcome to this Speakerdeck API server!</h1>
+<span>Available paths are:</span>
+<ul>
+	<li>/api/users/{user-handle}</li>
+	<li>/api/talks/{user-handle}</li>
+	<li>/api/talks/{user-handle}/{talk-id}</li>
+</ul>
+<br />
+<span>Created by Lucas Käldström. Source code at: <a href="https://github.com/luxas/speakerdeck-scraper">github.com/luxas/speakerdeck-scraper</a></span>
+`
+)
 
-const prefix = `/api`
+var (
+	validPaths = regexp.MustCompile(`^` + prefix + `/(talks|users)/([a-zA-Z0-9/-]+)$`)
 
-var validPaths = regexp.MustCompile(`^` + prefix + `/(talks|users)/([a-zA-Z0-9/-]+)$`)
+	address    = flag.String("address", "0.0.0.0", "What address to expose the API on")
+	port       = flag.Int("port", 8080, "What port to expose the API on")
+	mapsAPIKey = flag.String("maps-api-key", "", "Google Maps API key with the Geocoding API usage set")
+
+	locationExt *location.LocationExtension
+)
+
+func main() {
+	flag.Parse()
+	http.HandleFunc("/", makeHandler(helpHandler))
+	http.HandleFunc(prefix+"/users/", makeHandler(usersHandler))
+	http.HandleFunc(prefix+"/talks/", makeHandler(talksHandler))
+
+	if len(*mapsAPIKey) > 0 {
+		var err error
+		locationExt, err = location.NewLocationExtension(*mapsAPIKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Initialized the LocationExtension!")
+	}
+
+	addrPort := fmt.Sprintf("%s:%d", *address, *port)
+	log.Printf("Starting Speakerdeck API on %s...", addrPort)
+	log.Fatal(http.ListenAndServe(addrPort, nil))
+}
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string) (int, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			helpHandler(w, r, "")
+			return
+		}
 		m := validPaths.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			http.NotFound(w, r)
@@ -42,6 +87,11 @@ func encodeJSON(w io.Writer, data interface{}) error {
 	e.SetEscapeHTML(true)
 	e.SetIndent("", "  ")
 	return e.Encode(data)
+}
+
+func helpHandler(w http.ResponseWriter, r *http.Request, _ string) (int, error) {
+	w.Write([]byte(welcomeText))
+	return http.StatusOK, nil
 }
 
 func usersHandler(w http.ResponseWriter, r *http.Request, userID string) (int, error) {
@@ -71,7 +121,14 @@ func talksHandler(w http.ResponseWriter, r *http.Request, talkStr string) (int, 
 		talkID = parts[1]
 	}
 
-	talks, err := speakerdeck.ScrapeTalks(userID, talkID, nil)
+	var opts *scraper.ScrapeOptions
+	if locationExt != nil {
+		opts = &scraper.ScrapeOptions{
+			Extensions: []scraper.Extension{locationExt},
+		}
+	}
+
+	talks, err := speakerdeck.ScrapeTalks(userID, talkID, opts)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -80,13 +137,4 @@ func talksHandler(w http.ResponseWriter, r *http.Request, talkStr string) (int, 
 		return http.StatusInternalServerError, err
 	}
 	return http.StatusOK, nil
-}
-
-func main() {
-	http.HandleFunc(prefix+"/users/", makeHandler(usersHandler))
-	http.HandleFunc(prefix+"/talks/", makeHandler(talksHandler))
-
-	log.Printf("Starting Speakerdeck API...")
-	// TODO: Parameterize this
-	log.Fatal(http.ListenAndServe(":8080", nil))
 }
