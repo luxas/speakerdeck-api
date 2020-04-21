@@ -18,12 +18,7 @@ import (
 
 const prefix = `/api`
 
-var (
-	validPaths = regexp.MustCompile(`^` + prefix + `/(talks|users)/([a-zA-Z0-9/-]+)$`)
-
-	userScraper = speakerdeck.NewUserScraper()
-	talkScraper = speakerdeck.NewTalkScraper()
-)
+var validPaths = regexp.MustCompile(`^` + prefix + `/(talks|users)/([a-zA-Z0-9/-]+)$`)
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string) (int, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +49,7 @@ func usersHandler(w http.ResponseWriter, r *http.Request, userID string) (int, e
 		return http.StatusBadRequest, fmt.Errorf("invalid user name, can't contain /")
 	}
 
-	user, err := userScraper.ScrapeUser(userID, nil)
+	user, err := speakerdeck.ScrapeUser(userID, nil)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -76,7 +71,7 @@ func talksHandler(w http.ResponseWriter, r *http.Request, talkStr string) (int, 
 		talkID = parts[1]
 	}
 
-	talks, err := talkScraper.ScrapeTalk(userID, talkID, nil)
+	talks, err := speakerdeck.ScrapeTalk(userID, talkID, nil)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
