@@ -1,6 +1,6 @@
 all: build
 build:
-	go build -o bin/api ./cmd/api
+	go build -o bin/speakerdeck-api ./cmd/speakerdeck-api
 
 run: build
-	bin/api
+	bin/speakerdeck-api
