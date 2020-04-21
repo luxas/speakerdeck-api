@@ -6,7 +6,7 @@ import (
 	"sort"
 
 	"github.com/gocolly/colly"
-	"github.com/luxas/speakerdeck-scraper/scraper"
+	"github.com/luxas/speakerdeck-api/scraper"
 )
 
 // ScrapeUser returns an user object based on the given user handle. In opts,

@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly"
-	"github.com/luxas/speakerdeck-scraper"
-	"github.com/luxas/speakerdeck-scraper/scraper"
+	"github.com/luxas/speakerdeck-api"
+	"github.com/luxas/speakerdeck-api/scraper"
 	log "github.com/sirupsen/logrus"
 	"googlemaps.github.io/maps"
 )

@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/gocolly/colly"
-	"github.com/luxas/speakerdeck-scraper/scraper"
+	"github.com/luxas/speakerdeck-api/scraper"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	speakerdeck "github.com/luxas/speakerdeck-scraper"
-	"github.com/luxas/speakerdeck-scraper/location"
-	"github.com/luxas/speakerdeck-scraper/scraper"
+	speakerdeck "github.com/luxas/speakerdeck-api"
+	"github.com/luxas/speakerdeck-api/location"
+	"github.com/luxas/speakerdeck-api/scraper"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -27,7 +27,7 @@ const (
 	<li>/api/talks/{user-handle}/{talk-id}</li>
 </ul>
 <br />
-<span>Created by Lucas Käldström. Source code at: <a href="https://github.com/luxas/speakerdeck-scraper">github.com/luxas/speakerdeck-scraper</a></span>
+<span>Created by Lucas Käldström. Source code at: <a href="https://github.com/luxas/speakerdeck-api">github.com/luxas/speakerdeck-api</a></span>
 `
 )
 
