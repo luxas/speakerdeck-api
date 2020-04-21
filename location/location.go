@@ -16,6 +16,8 @@ var locationRegexp = regexp.MustCompile(`Location: (.*)`)
 
 var _ scraper.Extension = &LocationExtension{}
 
+// NewLocationExtension creates a new LocationExtension using a Google Maps API Key with access
+// to the Geocoding API.
 func NewLocationExtension(apiKey string) (*LocationExtension, error) {
 	c, err := maps.NewClient(maps.WithAPIKey(apiKey))
 	if err != nil {
@@ -25,14 +27,18 @@ func NewLocationExtension(apiKey string) (*LocationExtension, error) {
 	return &LocationExtension{c}, nil
 }
 
+// LocationExtension implements scraper.Extension, and adds geolocation features to the TalkScraper
+// LocationExtension only works together with speakerdeck.TalkScraper at the moment.
 type LocationExtension struct {
 	c *maps.Client
 }
 
+// Name returns the LocationExtension name
 func (_ *LocationExtension) Name() string {
 	return "LocationExtension"
 }
 
+// Hook returns the hook for this extension
 func (le *LocationExtension) Hook() scraper.Hook {
 	return scraper.Hook{
 		DOMPath: ".deck-description.mb-4 p",
@@ -40,6 +46,8 @@ func (le *LocationExtension) Hook() scraper.Hook {
 	}
 }
 
+// onDescription processes the location given in the Talk description field, and registers the geocoded
+// response to the Talk object.
 func (le *LocationExtension) onDescription(e *colly.HTMLElement, data interface{}) (*string, error) {
 	// Fail fast, only consider descriptions with the "Location" substring
 	if !strings.Contains(e.Text, "Location") {
