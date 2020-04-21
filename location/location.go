@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly"
-	"github.com/luxaslabs/luxaslabs/generator/scraper"
-	"github.com/luxaslabs/luxaslabs/generator/speakerdeck/types"
+	"github.com/luxas/speakerdeck-scraper"
+	"github.com/luxas/speakerdeck-scraper/scraper"
 	log "github.com/sirupsen/logrus"
 	"googlemaps.github.io/maps"
 )
@@ -47,16 +47,16 @@ func (le *LocationExtension) onDescription(e *colly.HTMLElement, data interface{
 	}
 
 	switch data.(type) {
-	case *types.Talk:
+	case *speakerdeck.Talk:
 		// noop, allow this
 	default:
 		return nil, nil
 	}
 
-	t := data.(*types.Talk)
+	t := data.(*speakerdeck.Talk)
 
 	if strings.Contains(e.Text, "Location: Online") {
-		t.Location = &types.Location{
+		t.Location = &speakerdeck.Location{
 			RequestedAddress: "Online",
 		}
 		return nil, nil
@@ -68,7 +68,7 @@ func (le *LocationExtension) onDescription(e *colly.HTMLElement, data interface{
 		return nil, nil
 	}
 
-	l := &types.Location{
+	l := &speakerdeck.Location{
 		RequestedAddress: locationStr[1],
 	}
 
