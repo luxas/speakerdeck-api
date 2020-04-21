@@ -150,15 +150,15 @@ func (p TalkPreviews) Swap(i, j int) {
 type Location struct {
 	// RequestedAddress is populated from the original "requested" address mentioned in the
 	// talk description (e.g. "TUAS-talo, Aalto University")
-	RequestedAddress string
+	RequestedAddress string `json:"requestedAddress"`
 
 	// ResolvedAddress is populated by the Google Maps Geocoding API, and is the official street address
 	// (or similar) of the place. In the above example: "Maarintie 8, 02150 Espoo, Finland"
-	ResolvedAddress string
+	ResolvedAddress string `json:"resolvedAddress"`
 
 	// Lat describes the latitude of the location
-	Lat float64
+	Lat float64 `json:"lat"`
 
 	// Lng describes the longitude of the location
-	Lng float64
+	Lng float64 `json:"lng"`
 }
