@@ -19,32 +19,26 @@ import (
 // TODO: Split this file into user.go, talk.go and common.go
 
 const (
-	SpeakerdeckRootURL = "https://speakerdeck.com"
+	speakerdeckRootURL = "https://speakerdeck.com"
 	httpsPrefix        = "https:"
 )
 
-func sdPrefix(s string) string {
-	return fmt.Sprintf("%s%s", SpeakerdeckRootURL, s)
-}
-
 var linkRegexp = regexp.MustCompile(`http[s]?://[a-zA-Z-_/0-9\.#=&]*`)
 
-var _ scraper.Scraper = &UserScraper{}
-
-func NewUserScraper() *UserScraper {
-	return &UserScraper{}
+func sdPrefix(s string) string {
+	return fmt.Sprintf("%s%s", speakerdeckRootURL, s)
 }
 
-type UserScraper struct{}
+// ScrapeUser returns an user object based on the given user handle. In opts,
+// you may specify possible scraping extensions, or log levels.
+func ScrapeUser(userHandle string, opts *scraper.ScrapeOptions) (*User, error) {
+	if len(userHandle) == 0 {
+		return nil, fmt.Errorf("userHandle is mandatory!")
+	}
 
-func (s *UserScraper) Name() string {
-	return "UserScraper"
-}
+	fullURL := fmt.Sprintf("%s/%s", speakerdeckRootURL, userHandle)
 
-func (s *UserScraper) ScrapeUser(userID string, opts *scraper.ScrapeOptions) (*User, error) {
-	fullURL := fmt.Sprintf("%s/%s", SpeakerdeckRootURL, userID)
-
-	data, err := scraper.Scrape(fullURL, s, opts)
+	data, err := scraper.Scrape(fullURL, &UserScraper{}, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +47,18 @@ func (s *UserScraper) ScrapeUser(userID string, opts *scraper.ScrapeOptions) (*U
 	return user, nil
 }
 
+var _ scraper.Scraper = &UserScraper{}
+
+// UserScraper implements scraper.Scraper
+type UserScraper struct{}
+
+// Name returns the name of the UserScraper
+func (s *UserScraper) Name() string {
+	return "UserScraper"
+}
+
+// Hooks returns mappings between DOM paths in the scraped web pages, and handler functions to extract data out
+// of them
 func (s *UserScraper) Hooks() []scraper.Hook {
 	return []scraper.Hook{
 		{
@@ -74,6 +80,9 @@ func (s *UserScraper) Hooks() []scraper.Hook {
 	}
 }
 
+// InitialData returns the struct pointer passed around between the handler functions registered in Hooks()
+// This pointer is passed as the second argument to all handlers. The handlers can cast it from interface{}
+// to its real type, and modify its data.
 func (s *UserScraper) InitialData() interface{} {
 	return NewUser()
 }
@@ -132,24 +141,17 @@ func onUserNextPage(e *colly.HTMLElement, _ interface{}) (*string, error) {
 	return nil, nil
 }
 
-func NewTalkScraper() *TalkScraper {
-	return &TalkScraper{}
-}
-
-type TalkScraper struct{}
-
-func (s *TalkScraper) Name() string {
-	return "TalkScraper"
-}
-
-func (s *TalkScraper) ScrapeTalk(userID, talkID string, opts *scraper.ScrapeOptions) (Talks, error) {
-	if len(userID) == 0 {
-		return nil, fmt.Errorf("userID is mandatory!")
+// ScrapeTalk returns either one sepecific talk if both userHandle and talkID are set, or a set of
+// all the users' talks in detail if only userHandle is set. In opts you can set extensions
+func ScrapeTalk(userHandle, talkID string, opts *scraper.ScrapeOptions) (Talks, error) {
+	if len(userHandle) == 0 {
+		return nil, fmt.Errorf("userHandle is mandatory!")
 	}
 
+	// If there was a specific talk given, look it up
 	if len(talkID) > 0 {
-		talkURL := fmt.Sprintf("%s/%s/%s", SpeakerdeckRootURL, userID, talkID)
-		data, err := scraper.Scrape(talkURL, s, opts)
+		talkURL := fmt.Sprintf("%s/%s/%s", speakerdeckRootURL, userHandle, talkID)
+		data, err := scraper.Scrape(talkURL, &TalkScraper{}, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -158,8 +160,7 @@ func (s *TalkScraper) ScrapeTalk(userID, talkID string, opts *scraper.ScrapeOpti
 		return []Talk{*talk}, nil
 	}
 
-	us := NewUserScraper()
-	user, err := us.ScrapeUser(userID, opts)
+	user, err := ScrapeUser(userHandle, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +174,7 @@ func (s *TalkScraper) ScrapeTalk(userID, talkID string, opts *scraper.ScrapeOpti
 		go func(talkPreview TalkPreview) {
 			defer wg.Done()
 
-			talkList, err := s.ScrapeTalk(user.Author.Handle, talkPreview.ID, opts)
+			talkList, err := ScrapeTalk(user.Author.Handle, talkPreview.ID, opts)
 			if err != nil {
 				log.Errorf("could not get speakerdeck talk %s/%s", user.Author.Handle, talkPreview.ID)
 				return
@@ -191,6 +192,16 @@ func (s *TalkScraper) ScrapeTalk(userID, talkID string, opts *scraper.ScrapeOpti
 	return sortedTalks, nil
 }
 
+// TalkScraper implements scraper.Scraper
+type TalkScraper struct{}
+
+// Name returns the name of the TalkScraper
+func (s *TalkScraper) Name() string {
+	return "TalkScraper"
+}
+
+// Hooks returns mappings between DOM paths in the scraped web pages, and handler functions to extract data out
+// of them
 func (s *TalkScraper) Hooks() []scraper.Hook {
 	return []scraper.Hook{
 		{
@@ -232,6 +243,9 @@ func (s *TalkScraper) Hooks() []scraper.Hook {
 	}
 }
 
+// InitialData returns the struct pointer passed around between the handler functions registered in Hooks()
+// This pointer is passed as the second argument to all handlers. The handlers can cast it from interface{}
+// to its real type, and modify its data.
 func (s *TalkScraper) InitialData() interface{} {
 	return NewTalk()
 }
