@@ -4,37 +4,61 @@ import (
 	"time"
 )
 
+// NewUser creates a new User object
 func NewUser() *User {
 	return &User{}
 }
 
-// User represents a user on speakerdeck.com
+// User represents a user on as browsed on the user page (i.e. https://speakerdeck.com/{user-handle})
 type User struct {
-	Author       Author       `json:"author"`
-	Abstract     string       `json:"abstract"`
+	// Author describes the Speakerdeck profile of the person that's created the presentations
+	Author Author `json:"author"`
+
+	// Abstract contains a short description of the user
+	Abstract string `json:"abstract"`
+
+	// TalkPreviews is a list of TalkPreview objects, containing information about each talk
+	// as seen on the user page
 	TalkPreviews TalkPreviews `json:"talkPreviews"`
 }
 
+// Author describes the SD profile of the person that's created the presentations
 type Author struct {
-	Name       string `json:"name"`
-	Handle     string `json:"handle"`
-	Link       string `json:"link"`
+	// Name describes the human-friendly name of the author
+	Name string `json:"name"`
+
+	// Handle describes the preferred nickname of the author. This is used in the URL
+	Handle string `json:"handle"`
+
+	// Link describes the link to the author's page
+	Link string `json:"link"`
+
+	// AvatarLink describes the link to the avatar of the author
 	AvatarLink string `json:"avatarLink"`
 }
 
+// TalkPreview contains the information about a talk that can be seen on the user page
 type TalkPreview struct {
 	// Title describes the talk title
 	Title string `json:"title"`
 
+	// ID describes the URL-encoded descriptor for the talk, used in the URL as
+	// https://speakerdeck.com/{user-handle}/{talk-id}. The ID is unique per user, but
+	// not globally across users
 	ID string `json:"id"`
 
+	// Views describes how many views a talk has got
 	Views uint32 `json:"views"`
 
+	// Stars describes how many other users have starred this talk
 	Stars uint32 `json:"stars"`
+
 	// Date represents the talk presentation date
 	Date time.Time `json:"date"`
-	// Link describes the link to Speakerdeck
+
+	// Link describes the link to the talk at Speakerdeck
 	Link string `json:"link"`
+
 	// DataID represents the key used to embed Speakerdeck presentations on an other website
 	DataID string `json:"dataID"`
 }
@@ -48,20 +72,37 @@ func NewTalk() *Talk {
 
 // Talk describes a presentation on Speakerdeck
 type Talk struct {
-	// Talk embeds all data that is visible from TalkPreview, too
+	// TalkPreview is embedded here as it contains all the data we want to display here, too
 	TalkPreview
 
+	// Author describes the Speakerdeck profile of the person that's created the presentations
 	Author Author `json:"author"`
 
-	Category     string `json:"category"`
+	// Category is a string of Speakerdeck-specific categories you can choose from when uploading a
+	// presentation, e.g. "Technology"
+	Category string `json:"category"`
+
+	// CategoryLink is the link to other presentations belonging to the same category, e.g.
+	// https://speakerdeck.com/c/technology.
 	CategoryLink string `json:"categoryLink"`
+
+	// DownloadLink is the link from where you can download the underlying PDF
 	DownloadLink string `json:"downloadLink"`
 
-	// ExtraLinks contains parsed URLs found in the description, mapped by their domain name
+	// ExtraLinks contains parsed URLs found in the talk description, mapped by their domain name
 	ExtraLinks map[string][]string `json:"extraLinks"`
-	// Hide is set to true if the talk description contains a "Hide: true" string, indicating it should not be scraped
+
+	// Hide is set to true if the talk description contains a "Hide: true" string,
+	// indicating it should not be visible for the API. If a talk has set Hide=true,
+	// it will be returned as normal, and the user of the API can choose whether to ignore
+	// or respect that pledge
 	Hide bool `json:"hide"`
-	// Location can be populated by the LocationExtension available in
+
+	// Location describes a geographical location for the talk
+	// This field is populated by the LocationExtension, and is set based on
+	// a "Location: <address>" string in the talk description. For instance,
+	// if you put "Location: TUAS-talo, Aalto University" in the talk description,
+	// Location will be populated with coordinates based on Google Maps data.
 	Location *Location `json:"location,omitempty"`
 }
 
@@ -102,7 +143,7 @@ func (p TalkPreviews) Swap(i, j int) {
 }
 
 // Location describes a geographical location for the talk
-// This field is populated by the LocationExtension, and is set based on
+// This struct is populated by the LocationExtension, and is set based on
 // a "Location: <address>" string in the talk description. For instance,
 // if you put "Location: TUAS-talo, Aalto University" in the talk description,
 // Location will be populated with coordinates based on Google Maps data.
@@ -110,11 +151,14 @@ type Location struct {
 	// RequestedAddress is populated from the original "requested" address mentioned in the
 	// talk description (e.g. "TUAS-talo, Aalto University")
 	RequestedAddress string
+
 	// ResolvedAddress is populated by the Google Maps Geocoding API, and is the official street address
 	// (or similar) of the place. In the above example: "Maarintie 8, 02150 Espoo, Finland"
 	ResolvedAddress string
+
 	// Lat describes the latitude of the location
 	Lat float64
+
 	// Lng describes the longitude of the location
 	Lng float64
 }
