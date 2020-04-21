@@ -13,9 +13,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// ScrapeTalk returns either one sepecific talk if both userHandle and talkID are set, or a set of
+// ScrapeTalks returns either one sepecific talk if both userHandle and talkID are set, or a set of
 // all the users' talks in detail if only userHandle is set. In opts you can set extensions
-func ScrapeTalk(userHandle, talkID string, opts *scraper.ScrapeOptions) (Talks, error) {
+func ScrapeTalks(userHandle, talkID string, opts *scraper.ScrapeOptions) (Talks, error) {
 	if len(userHandle) == 0 {
 		return nil, fmt.Errorf("userHandle is mandatory!")
 	}
@@ -46,7 +46,7 @@ func ScrapeTalk(userHandle, talkID string, opts *scraper.ScrapeOptions) (Talks, 
 		go func(talkPreview TalkPreview) {
 			defer wg.Done()
 
-			talkList, err := ScrapeTalk(user.Author.Handle, talkPreview.ID, opts)
+			talkList, err := ScrapeTalks(user.Author.Handle, talkPreview.ID, opts)
 			if err != nil {
 				log.Errorf("could not get speakerdeck talk %s/%s", user.Author.Handle, talkPreview.ID)
 				return

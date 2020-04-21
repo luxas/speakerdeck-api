@@ -71,7 +71,7 @@ func talksHandler(w http.ResponseWriter, r *http.Request, talkStr string) (int, 
 		talkID = parts[1]
 	}
 
-	talks, err := speakerdeck.ScrapeTalk(userID, talkID, nil)
+	talks, err := speakerdeck.ScrapeTalks(userID, talkID, nil)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
