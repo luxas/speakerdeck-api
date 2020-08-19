@@ -19,7 +19,7 @@ type User struct {
 
 	// TalkPreviews is a list of TalkPreview objects, containing information about each talk
 	// as seen on the user page
-	TalkPreviews TalkPreviews `json:"talkPreviews"`
+	TalkPreviews []TalkPreview `json:"talkPreviews"`
 }
 
 // Author describes the SD profile of the person that's created the presentations
@@ -53,9 +53,6 @@ type TalkPreview struct {
 	// Stars describes how many other users have starred this talk
 	Stars uint32 `json:"stars"`
 
-	// Date represents the talk presentation date
-	Date time.Time `json:"date"`
-
 	// Link describes the link to the talk at Speakerdeck
 	Link string `json:"link"`
 
@@ -74,6 +71,9 @@ func NewTalk() *Talk {
 type Talk struct {
 	// TalkPreview is embedded here as it contains all the data we want to display here, too
 	TalkPreview
+
+	// Date represents the talk presentation date
+	Date time.Time `json:"date"`
 
 	// Author describes the Speakerdeck profile of the person that's created the presentations
 	Author Author `json:"author"`
@@ -121,24 +121,6 @@ func (p Talks) Less(i, j int) bool {
 
 // Swap implements sort.Interface
 func (p Talks) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
-
-// TalkPreviews orders the TalkPreview objects by time
-type TalkPreviews []TalkPreview
-
-// Len implements sort.Interface
-func (p TalkPreviews) Len() int {
-	return len(p)
-}
-
-// Less implements sort.Interface
-func (p TalkPreviews) Less(i, j int) bool {
-	return p[i].Date.Before(p[j].Date)
-}
-
-// Swap implements sort.Interface
-func (p TalkPreviews) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 

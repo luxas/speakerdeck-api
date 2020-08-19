@@ -3,7 +3,6 @@ package speakerdeck
 import (
 	"fmt"
 	"path"
-	"sort"
 
 	"github.com/gocolly/colly"
 	"github.com/luxas/speakerdeck-api/scraper"
@@ -23,7 +22,6 @@ func ScrapeUser(userHandle string, opts *scraper.ScrapeOptions) (*User, error) {
 		return nil, err
 	}
 	user := data.(*User)
-	sort.Sort(user.TalkPreviews)
 	return user, nil
 }
 
@@ -85,10 +83,6 @@ func onUserAbstract(e *colly.HTMLElement, data interface{}) (*string, error) {
 func onUserTalkFound(e *colly.HTMLElement, data interface{}) (*string, error) {
 	u := data.(*User)
 
-	d, err := parseDate(e.ChildText(".deck-preview-meta > :nth-child(1)"))
-	if err != nil {
-		return nil, err
-	}
 	stars, err := parseNumber(e.ChildText(".deck-preview-meta > :nth-child(2)"))
 	if err != nil {
 		return nil, err
@@ -102,7 +96,6 @@ func onUserTalkFound(e *colly.HTMLElement, data interface{}) (*string, error) {
 		Title:  e.Attr("title"),
 		Link:   sdPrefix(e.Attr("href")),
 		DataID: e.ChildAttr("div.deck-preview", "data-id"),
-		Date:   d,
 		Views:  views,
 		Stars:  stars,
 	}
